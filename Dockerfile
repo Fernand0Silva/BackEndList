@@ -1,16 +1,22 @@
+# Etapa 1: construir com Maven
 FROM ubuntu:latest AS build
 
-RUN apt-get update
-RUN apt-get install openjdk-17-jdk -y
+RUN apt-get update && \
+    apt-get install -y openjdk-17-jdk maven
+
+WORKDIR /app
+
 COPY . .
 
-RUN apt-get install maven -y
-RUN mvn clean install
+RUN mvn clean package -DskipTests
 
+# Etapa 2: imagem final
 FROM openjdk:17-jdk-slim
 
-Expose 8080
+WORKDIR /app
 
-COPY --from=build /target/List-1.0.0.jar app.jar
+EXPOSE 8080
 
-ENTRYPOINT [ "java","-jar","app.jar" ]
+COPY --from=build /app/target/*.jar app.jar
+
+ENTRYPOINT [ "java", "-jar", "app.jar" ]
